@@ -16,11 +16,16 @@ const gifts = [
 ];
 
 let currentGift = 0;
+let favorites = [];
 
 function createCard(imageSrc) {
     const card = document.createElement('div');
     card.className = 'gift-card';
-    card.innerHTML = `<img src="${imageSrc}" alt="Regalo">`;
+    card.innerHTML = `
+        <img src="${imageSrc}" alt="Regalo">
+        <button class="favorite-btn">❤️</button>
+        <button id="next-btn">Siguiente</button>
+    `;
     return card;
 }
 
@@ -31,6 +36,29 @@ function renderCards() {
     nextCard.style.transform = 'scale(0.9)';
     giftCard.appendChild(nextCard);
     giftCard.appendChild(currentCard);
+
+    addFavoriteFunctionality(currentCard);  // Añadir funcionalidad de favoritos
+}
+
+function addFavoriteFunctionality(card) {
+    const favoriteBtn = card.querySelector('.favorite-btn');
+
+    // Verificar si el regalo está en favoritos
+    if (favorites.includes(gifts[currentGift])) {
+        favoriteBtn.classList.add('favorited');
+    } else {
+        favoriteBtn.classList.remove('favorited');
+    }
+
+    // Manejo del evento click
+    favoriteBtn.addEventListener('click', () => {
+        if (favorites.includes(gifts[currentGift])) {
+            favorites = favorites.filter(gift => gift !== gifts[currentGift]);  // Eliminar de favoritos
+        } else {
+            favorites.push(gifts[currentGift]);  // Añadir a favoritos
+        }
+        favoriteBtn.classList.toggle('favorited');
+    });
 }
 
 function addSwipeFunctionality() {
