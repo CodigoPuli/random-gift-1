@@ -28,27 +28,34 @@ function renderCards() {
     giftCard.innerHTML = '';
     const currentCard = createCard(gifts[currentGift]);
     const nextCard = createCard(gifts[(currentGift + 1) % gifts.length]);
+    const prevCard = createCard(gifts[(currentGift - 1 + gifts.length) % gifts.length]);
+
     nextCard.style.transform = 'scale(0.9)';
+    prevCard.style.transform = 'scale(0.9)';
+
+    giftCard.appendChild(prevCard);
     giftCard.appendChild(nextCard);
     giftCard.appendChild(currentCard);
 }
 
 function addSwipeFunctionality() {
     const cards = document.querySelectorAll('.gift-card');
-    if (cards.length < 2) return;
+    if (cards.length < 3) return;
 
     let startX = 0;
     let currentX = 0;
     let isDragging = false;
 
-    const currentCard = cards[1];
-    const nextCard = cards[0];
+    const prevCard = cards[0];
+    const nextCard = cards[1];
+    const currentCard = cards[2];
 
     const startDrag = (x) => {
         startX = x;
         isDragging = true;
         currentCard.style.transition = 'none';
         nextCard.style.transition = 'none';
+        prevCard.style.transition = 'none';
     };
 
     const duringDrag = (x) => {
@@ -56,7 +63,12 @@ function addSwipeFunctionality() {
         currentX = x;
         const diff = currentX - startX;
         currentCard.style.transform = `translateX(${diff}px) rotate(${diff / 20}deg)`;
-        nextCard.style.transform = `scale(${Math.max(0.9, 1 - Math.abs(diff) / 300)})`;
+
+        if (diff > 0) {
+            prevCard.style.transform = `scale(${Math.min(1, 0.9 + Math.abs(diff) / 300)})`;
+        } else {
+            nextCard.style.transform = `scale(${Math.min(1, 0.9 + Math.abs(diff) / 300)})`;
+        }
     };
 
     const endDrag = () => {
@@ -67,19 +79,28 @@ function addSwipeFunctionality() {
         if (Math.abs(diff) > 100) {
             currentCard.style.transition = 'transform 0.3s ease-in-out';
             nextCard.style.transition = 'transform 0.3s ease-in-out';
+            prevCard.style.transition = 'transform 0.3s ease-in-out';
 
-            currentCard.style.transform = `translateX(${diff > 0 ? 1000 : -1000}px) rotate(${diff / 20}deg)`;
-            nextCard.style.transform = 'scale(1)';
+            if (diff > 0) {
+                currentCard.style.transform = `translateX(1000px) rotate(${diff / 20}deg)`;
+                prevCard.style.transform = 'scale(1)';
+                currentGift = (currentGift - 1 + gifts.length) % gifts.length;
+            } else {
+                currentCard.style.transform = `translateX(-1000px) rotate(${diff / 20}deg)`;
+                nextCard.style.transform = 'scale(1)';
+                currentGift = (currentGift + 1) % gifts.length;
+            }
 
             currentCard.addEventListener('transitionend', () => {
-                currentGift = (currentGift + 1) % gifts.length;
                 renderCards();
                 addSwipeFunctionality();
             }, { once: true });
         } else {
             currentCard.style.transition = 'transform 0.3s ease-in-out';
+            prevCard.style.transition = 'transform 0.3s ease-in-out';
             nextCard.style.transition = 'transform 0.3s ease-in-out';
             currentCard.style.transform = 'translateX(0) rotate(0)';
+            prevCard.style.transform = 'scale(0.9)';
             nextCard.style.transform = 'scale(0.9)';
         }
     };
