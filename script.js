@@ -1,4 +1,5 @@
 const giftCard = document.getElementById('gift-card');
+const favoritesList = document.getElementById('favorites-list');
 const gifts = [
     'images/regalo1.jpg',
     'images/regalo2.jpg',
@@ -24,7 +25,6 @@ function createCard(imageSrc) {
     card.innerHTML = `
         <img src="${imageSrc}" alt="Regalo">
         <button class="favorite-btn">❤️</button>
-        <button id="next-btn">Siguiente</button>
     `;
     return card;
 }
@@ -32,11 +32,7 @@ function createCard(imageSrc) {
 function renderCards() {
     giftCard.innerHTML = '';
     const currentCard = createCard(gifts[currentGift]);
-    const nextCard = createCard(gifts[(currentGift + 1) % gifts.length]);
-    nextCard.style.transform = 'scale(0.9)';
-    giftCard.appendChild(nextCard);
     giftCard.appendChild(currentCard);
-
     addFavoriteFunctionality(currentCard);  // Añadir funcionalidad de favoritos
 }
 
@@ -58,71 +54,32 @@ function addFavoriteFunctionality(card) {
             favorites.push(gifts[currentGift]);  // Añadir a favoritos
         }
         favoriteBtn.classList.toggle('favorited');
+        updateFavoritesList();  // Actualizar la lista de favoritos
     });
 }
 
-function addSwipeFunctionality() {
-    const cards = document.querySelectorAll('.gift-card');
-    if (cards.length < 2) return;
+function updateFavoritesList() {
+    // Limpiar la lista de favoritos
+    favoritesList.innerHTML = '';
 
-    let startX = 0;
-    let currentX = 0;
-    let isDragging = false;
-    let currentCard = cards[1];
-    let nextCard = cards[0];
+    // Mostrar las imágenes de los favoritos
+    favorites.forEach((gift) => {
+        const favoriteItem = document.createElement('div');
+        favoriteItem.className = 'favorite-item';
+        favoriteItem.innerHTML = `
+            <img src="${gift}" alt="Favorito">
+            <button class="favorite-btn">❤️</button>
+        `;
 
-    const startDrag = (x) => {
-        startX = x;
-        isDragging = true;
-        currentCard.style.transition = 'none';
-        nextCard.style.transition = 'none';
-    };
+        // Añadir el botón de favorito para eliminar del favorito si es necesario
+        const favoriteBtn = favoriteItem.querySelector('.favorite-btn');
+        favoriteBtn.addEventListener('click', () => {
+            favorites = favorites.filter(fav => fav !== gift);  // Eliminar de favoritos
+            updateFavoritesList();  // Actualizar la lista de favoritos
+        });
 
-    const duringDrag = (x) => {
-        if (!isDragging) return;
-        currentX = x;
-        const diff = currentX - startX;
-        currentCard.style.transform = `translateX(${diff}px) rotate(${diff / 20}deg)`;
-        nextCard.style.transform = `scale(${Math.max(0.9, 1 - Math.abs(diff) / 300)})`;
-    };
-
-    const endDrag = () => {
-        if (!isDragging) return;
-        isDragging = false;
-        const diff = currentX - startX;
-
-        if (Math.abs(diff) > 100) {
-            currentCard.style.transition = 'transform 0.3s ease-in-out';
-            nextCard.style.transition = 'transform 0.3s ease-in-out';
-
-            currentCard.style.transform = `translateX(${diff > 0 ? 1000 : -1000}px) rotate(${diff / 20}deg)`;
-            nextCard.style.transform = 'scale(1)';
-
-            // Cambiar la imagen actual por la siguiente
-            currentGift = (currentGift + (diff > 0 ? -1 : 1) + gifts.length) % gifts.length;
-            currentCard.addEventListener('transitionend', () => {
-                renderCards();
-                addSwipeFunctionality();
-            }, { once: true });
-        } else {
-            currentCard.style.transition = 'transform 0.3s ease-in-out';
-            nextCard.style.transition = 'transform 0.3s ease-in-out';
-            currentCard.style.transform = 'translateX(0) rotate(0)';
-            nextCard.style.transform = 'scale(0.9)';
-        }
-    };
-
-    // Eventos para ratón
-    currentCard.addEventListener('mousedown', (e) => startDrag(e.clientX));
-    currentCard.addEventListener('mousemove', (e) => duringDrag(e.clientX));
-    currentCard.addEventListener('mouseup', endDrag);
-    currentCard.addEventListener('mouseleave', endDrag);
-
-    // Eventos para pantallas táctiles
-    currentCard.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX));
-    currentCard.addEventListener('touchmove', (e) => duringDrag(e.touches[0].clientX));
-    currentCard.addEventListener('touchend', endDrag);
+        favoritesList.appendChild(favoriteItem);
+    });
 }
 
 renderCards();
-addSwipeFunctionality();
