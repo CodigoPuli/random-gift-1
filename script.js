@@ -29,43 +29,41 @@ function showFeedback(message, color) {
     feedback.className = 'feedback';
     feedback.textContent = message;
     feedback.style.color = color;
-    document.body.appendChild(feedback);
+    feedback.style.position = 'absolute';
+    feedback.style.bottom = '10px';
+    feedback.style.left = '50%';
+    feedback.style.transform = 'translateX(-50%)';
+    feedback.style.fontSize = '1.5rem';
+    feedback.style.fontWeight = 'bold';
+    feedback.style.textShadow = '1px 1px 2px rgba(0, 0, 0, 0.5)';
+    giftCard.appendChild(feedback);
     setTimeout(() => feedback.remove(), 1000);
 }
 
 function renderCards() {
     giftCard.innerHTML = '';
     const currentCard = createCard(gifts[currentGift]);
-    const nextCard = createCard(gifts[(currentGift + 1) % gifts.length]);
-    nextCard.style.transform = 'scale(0.9)';
-    giftCard.appendChild(nextCard);
     giftCard.appendChild(currentCard);
 }
 
 function addSwipeFunctionality() {
-    const cards = document.querySelectorAll('.gift-card');
-    if (cards.length < 2) return;
+    const card = document.querySelector('.gift-card');
 
     let startX = 0;
     let currentX = 0;
     let isDragging = false;
 
-    const currentCard = cards[1];
-    const nextCard = cards[0];
-
     const startDrag = (x) => {
         startX = x;
         isDragging = true;
-        currentCard.style.transition = 'none';
-        nextCard.style.transition = 'none';
+        card.style.transition = 'none';
     };
 
     const duringDrag = (x) => {
         if (!isDragging) return;
         currentX = x;
         const diff = currentX - startX;
-        currentCard.style.transform = `translateX(${diff}px) rotate(${diff / 20}deg)`;
-        nextCard.style.transform = `scale(${Math.max(0.9, 1 - Math.abs(diff) / 300)})`;
+        card.style.transform = `translateX(${diff}px) rotate(${diff / 20}deg)`;
     };
 
     const endDrag = () => {
@@ -73,42 +71,39 @@ function addSwipeFunctionality() {
         isDragging = false;
         const diff = currentX - startX;
 
-        if (Math.abs(diff) > 100) {
-            currentCard.style.transition = 'transform 0.3s ease-in-out';
-            nextCard.style.transition = 'transform 0.3s ease-in-out';
+        card.style.transition = 'transform 0.3s ease-in-out';
 
-            if (diff > 0) {
-                currentCard.style.transform = 'translateX(1000px) rotate(20deg)';
-                showFeedback('Dislike', 'red');
-            } else {
-                currentCard.style.transform = 'translateX(-1000px) rotate(-20deg)';
-                showFeedback('Like', 'green');
-            }
-
-            nextCard.style.transform = 'scale(1)';
-            currentCard.addEventListener('transitionend', () => {
+        if (diff > 100 && currentGift > 0) { // Deslizar a la derecha
+            card.style.transform = 'translateX(1000px) rotate(20deg)';
+            showFeedback('Dislike', 'red');
+            card.addEventListener('transitionend', () => {
+                currentGift = (currentGift - 1 + gifts.length) % gifts.length;
+                renderCards();
+                addSwipeFunctionality();
+            }, { once: true });
+        } else if (diff < -100 && currentGift < gifts.length - 1) { // Deslizar a la izquierda
+            card.style.transform = 'translateX(-1000px) rotate(-20deg)';
+            showFeedback('Like', 'green');
+            card.addEventListener('transitionend', () => {
                 currentGift = (currentGift + 1) % gifts.length;
                 renderCards();
                 addSwipeFunctionality();
             }, { once: true });
         } else {
-            currentCard.style.transition = 'transform 0.3s ease-in-out';
-            nextCard.style.transition = 'transform 0.3s ease-in-out';
-            currentCard.style.transform = 'translateX(0) rotate(0)';
-            nextCard.style.transform = 'scale(0.9)';
+            card.style.transform = 'translateX(0) rotate(0)';
         }
     };
 
     // Eventos para ratón
-    currentCard.addEventListener('mousedown', (e) => startDrag(e.clientX));
-    currentCard.addEventListener('mousemove', (e) => duringDrag(e.clientX));
-    currentCard.addEventListener('mouseup', endDrag);
-    currentCard.addEventListener('mouseleave', endDrag);
+    card.addEventListener('mousedown', (e) => startDrag(e.clientX));
+    card.addEventListener('mousemove', (e) => duringDrag(e.clientX));
+    card.addEventListener('mouseup', endDrag);
+    card.addEventListener('mouseleave', endDrag);
 
     // Eventos para pantallas táctiles
-    currentCard.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX));
-    currentCard.addEventListener('touchmove', (e) => duringDrag(e.touches[0].clientX));
-    currentCard.addEventListener('touchend', endDrag);
+    card.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX));
+    card.addEventListener('touchmove', (e) => duringDrag(e.touches[0].clientX));
+    card.addEventListener('touchend', endDrag);
 }
 
 renderCards();
