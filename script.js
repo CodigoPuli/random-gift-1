@@ -1,4 +1,3 @@
-const nextBtn = document.getElementById('next-btn');
 const giftCard = document.getElementById('gift-card');
 const gifts = [
     'images/regalo1.jpg',
@@ -18,74 +17,82 @@ const gifts = [
 
 let currentGift = 0;
 
-nextBtn.addEventListener('click', () => {
-    currentGift = (currentGift + 1) % gifts.length;
-    giftCard.innerHTML = `<img src="${gifts[currentGift]}" alt="Regalo"> <button id="next-btn">Siguiente</button>`;
-    addSwipeFunctionality();
-});
-
-// Agregar funcionalidad de swipe con ratón o touch
-let startX = 0;
-let currentX = 0;
-let isDragging = false;
-
-giftCard.addEventListener('mousedown', (e) => {
-    startX = e.clientX;
-    isDragging = true;
-    giftCard.style.transition = 'none'; // Desactivamos la transición mientras se arrastra
-});
-
-giftCard.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    currentX = e.clientX;
-    const diff = currentX - startX;
-    giftCard.style.transform = `translateX(${diff}px)`; // Mueve la tarjeta
-});
-
-giftCard.addEventListener('mouseup', () => {
-    isDragging = false;
-    giftCard.style.transition = 'transform 0.3s ease-in-out';
-    if (currentX - startX > 100) {
-        // Deslizar hacia la derecha (aceptar regalo)
-        nextGift();
-    } else if (startX - currentX > 100) {
-        // Deslizar hacia la izquierda (rechazar regalo)
-        nextGift();
-    } else {
-        // Si no se desliza lo suficiente, volver a la posición inicial
-        giftCard.style.transform = 'translateX(0)';
-    }
-});
-
-giftCard.addEventListener('touchstart', (e) => {
-    startX = e.touches[0].clientX;
-    isDragging = true;
-    giftCard.style.transition = 'none';
-});
-
-giftCard.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
-    currentX = e.touches[0].clientX;
-    const diff = currentX - startX;
-    giftCard.style.transform = `translateX(${diff}px)`;
-});
-
-giftCard.addEventListener('touchend', () => {
-    isDragging = false;
-    giftCard.style.transition = 'transform 0.3s ease-in-out';
-    if (currentX - startX > 100) {
-        nextGift();
-    } else if (startX - currentX > 100) {
-        nextGift();
-    } else {
-        giftCard.style.transform = 'translateX(0)';
-    }
-});
-
-function nextGift() {
-    currentGift = (currentGift + 1) % gifts.length;
-    giftCard.innerHTML = `<img src="${gifts[currentGift]}" alt="Regalo"> <button id="next-btn">Siguiente</button>`;
-    addSwipeFunctionality();
+function createCard(imageSrc) {
+    const card = document.createElement('div');
+    card.className = 'gift-card';
+    card.innerHTML = `<img src="${imageSrc}" alt="Regalo">`;
+    return card;
 }
 
+function renderCards() {
+    giftCard.innerHTML = '';
+    const currentCard = createCard(gifts[currentGift]);
+    const nextCard = createCard(gifts[(currentGift + 1) % gifts.length]);
+    nextCard.style.transform = 'scale(0.9)';
+    giftCard.appendChild(nextCard);
+    giftCard.appendChild(currentCard);
+}
+
+function addSwipeFunctionality() {
+    const cards = document.querySelectorAll('.gift-card');
+    if (cards.length < 2) return;
+
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+
+    const currentCard = cards[1];
+    const nextCard = cards[0];
+
+    const startDrag = (x) => {
+        startX = x;
+        isDragging = true;
+        currentCard.style.transition = 'none';
+        nextCard.style.transition = 'none';
+    };
+
+    const duringDrag = (x) => {
+        if (!isDragging) return;
+        currentX = x;
+        const diff = currentX - startX;
+        currentCard.style.transform = `translateX(${diff}px) rotate(${diff / 20}deg)`;
+        nextCard.style.transform = `scale(${Math.max(0.9, 1 - Math.abs(diff) / 300)})`;
+    };
+
+    const endDrag = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        const diff = currentX - startX;
+
+        if (Math.abs(diff) > 100) {
+            currentCard.style.transition = 'transform 0.3s ease-in-out';
+            nextCard.style.transition = 'transform 0.3s ease-in-out';
+
+            currentCard.style.transform = `translateX(${diff > 0 ? 1000 : -1000}px) rotate(${diff / 20}deg)`;
+            nextCard.style.transform = 'scale(1)';
+
+            currentCard.addEventListener('transitionend', () => {
+                currentGift = (currentGift + 1) % gifts.length;
+                renderCards();
+                addSwipeFunctionality();
+            }, { once: true });
+        } else {
+            currentCard.style.transition = 'transform 0.3s ease-in-out';
+            nextCard.style.transition = 'transform 0.3s ease-in-out';
+            currentCard.style.transform = 'translateX(0) rotate(0)';
+            nextCard.style.transform = 'scale(0.9)';
+        }
+    };
+
+    currentCard.addEventListener('mousedown', (e) => startDrag(e.clientX));
+    currentCard.addEventListener('mousemove', (e) => duringDrag(e.clientX));
+    currentCard.addEventListener('mouseup', endDrag);
+    currentCard.addEventListener('mouseleave', endDrag);
+
+    currentCard.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX));
+    currentCard.addEventListener('touchmove', (e) => duringDrag(e.touches[0].clientX));
+    currentCard.addEventListener('touchend', endDrag);
+}
+
+renderCards();
 addSwipeFunctionality();
