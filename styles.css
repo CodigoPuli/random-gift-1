@@ -7,11 +7,19 @@ body {
     height: 100vh;
     margin: 0;
     background-color: #f0f0f0;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: hidden; /* Evitar el desplazamiento de la página */
 }
 
 .gift-container {
     position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     margin-bottom: 20px;
+    width: 100%; /* Aseguramos que ocupe todo el ancho */
+    height: 80%; /* Aseguramos que ocupe el 80% de la altura */
 }
 
 .gift-card {
@@ -21,9 +29,13 @@ body {
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    position: relative;
+    position: absolute;
     transition: transform 0.3s ease-in-out;
-    user-select: none; /* Evita la selección de texto */
+    user-select: none;
+    cursor: grab;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .gift-card img {
@@ -45,16 +57,22 @@ body {
 }
 
 .favorite-btn.favorited {
-    color: #ff5e5e; /* Color rojo cuando es favorito */
+    color: #ff5e5e;
 }
 
 .favorites-container {
-    margin-top: 20px;
+    width: 100%;
     text-align: center;
+    margin-top: 20px;
+}
+
+.favorites-container h2 {
+    margin-bottom: 20px;
 }
 
 #favorites-list {
     display: flex;
+    justify-content: center;
     flex-wrap: wrap;
     gap: 10px;
 }

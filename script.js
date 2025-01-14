@@ -1,3 +1,4 @@
+const giftContainer = document.getElementById('gift-container');
 const giftCard = document.getElementById('gift-card');
 const favoritesList = document.getElementById('favorites-list');
 const gifts = [
@@ -34,6 +35,7 @@ function renderCards() {
     const currentCard = createCard(gifts[currentGift]);
     giftCard.appendChild(currentCard);
     addFavoriteFunctionality(currentCard);  // Añadir funcionalidad de favoritos
+    addSwipeFunctionality(currentCard);  // Añadir funcionalidad de swipe
 }
 
 function addFavoriteFunctionality(card) {
@@ -80,6 +82,57 @@ function updateFavoritesList() {
 
         favoritesList.appendChild(favoriteItem);
     });
+}
+
+function addSwipeFunctionality(card) {
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+
+    const startDrag = (e) => {
+        startX = e.clientX || e.touches[0].clientX;
+        isDragging = true;
+        card.style.transition = 'none';
+    };
+
+    const duringDrag = (e) => {
+        if (!isDragging) return;
+        currentX = e.clientX || e.touches[0].clientX;
+        const diff = currentX - startX;
+        card.style.transform = `translateX(${diff}px) rotate(${diff / 20}deg)`;
+    };
+
+    const endDrag = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        const diff = currentX - startX;
+
+        if (Math.abs(diff) > 100) {
+            card.style.transition = 'transform 0.3s ease-in-out';
+            card.style.transform = `translateX(${diff > 0 ? 1000 : -1000}px) rotate(${diff / 20}deg)`;
+
+            // Cambiar la imagen actual por la siguiente
+            currentGift = (currentGift + (diff > 0 ? -1 : 1) + gifts.length) % gifts.length;
+
+            card.addEventListener('transitionend', () => {
+                renderCards();
+            }, { once: true });
+        } else {
+            card.style.transition = 'transform 0.3s ease-in-out';
+            card.style.transform = 'translateX(0) rotate(0)';
+        }
+    };
+
+    // Eventos para ratón
+    card.addEventListener('mousedown', startDrag);
+    card.addEventListener('mousemove', duringDrag);
+    card.addEventListener('mouseup', endDrag);
+    card.addEventListener('mouseleave', endDrag);
+
+    // Eventos para pantallas táctiles
+    card.addEventListener('touchstart', startDrag);
+    card.addEventListener('touchmove', duringDrag);
+    card.addEventListener('touchend', endDrag);
 }
 
 renderCards();
