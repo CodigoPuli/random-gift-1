@@ -17,38 +17,33 @@ const gifts = [
 
 let currentGift = 0;
 
-function createCard(imageSrc) {
+function createCard(imageSrc, className) {
     const card = document.createElement('div');
-    card.className = 'gift-card';
+    card.className = `gift-card ${className}`;
     card.innerHTML = `<img src="${imageSrc}" alt="Regalo">`;
     return card;
 }
 
 function renderCards() {
     giftCard.innerHTML = '';
-    const currentCard = createCard(gifts[currentGift]);
-    const nextCard = createCard(gifts[(currentGift + 1) % gifts.length]);
-    const prevCard = createCard(gifts[(currentGift - 1 + gifts.length) % gifts.length]);
 
-    nextCard.style.transform = 'scale(0.9)';
-    prevCard.style.transform = 'scale(0.9)';
+    const currentCard = createCard(gifts[currentGift], 'current');
+    const nextCard = createCard(gifts[(currentGift + 1) % gifts.length], 'next');
+    const prevCard = createCard(gifts[(currentGift - 1 + gifts.length) % gifts.length], 'prev');
 
     giftCard.appendChild(prevCard);
-    giftCard.appendChild(nextCard);
     giftCard.appendChild(currentCard);
+    giftCard.appendChild(nextCard);
 }
 
 function addSwipeFunctionality() {
-    const cards = document.querySelectorAll('.gift-card');
-    if (cards.length < 3) return;
+    const currentCard = document.querySelector('.gift-card.current');
+    const nextCard = document.querySelector('.gift-card.next');
+    const prevCard = document.querySelector('.gift-card.prev');
 
     let startX = 0;
     let currentX = 0;
     let isDragging = false;
-
-    const prevCard = cards[0];
-    const nextCard = cards[1];
-    const currentCard = cards[2];
 
     const startDrag = (x) => {
         startX = x;
@@ -63,11 +58,10 @@ function addSwipeFunctionality() {
         currentX = x;
         const diff = currentX - startX;
         currentCard.style.transform = `translateX(${diff}px) rotate(${diff / 20}deg)`;
-
         if (diff > 0) {
-            prevCard.style.transform = `scale(${Math.min(1, 0.9 + Math.abs(diff) / 300)})`;
+            prevCard.style.transform = `translateX(${diff - 300}px) scale(1)`;
         } else {
-            nextCard.style.transform = `scale(${Math.min(1, 0.9 + Math.abs(diff) / 300)})`;
+            nextCard.style.transform = `translateX(${diff + 300}px) scale(1)`;
         }
     };
 
@@ -76,33 +70,31 @@ function addSwipeFunctionality() {
         isDragging = false;
         const diff = currentX - startX;
 
-        if (Math.abs(diff) > 100) {
+        if (diff > 100) {
             currentCard.style.transition = 'transform 0.3s ease-in-out';
-            nextCard.style.transition = 'transform 0.3s ease-in-out';
+            currentCard.style.transform = 'translateX(1000px)';
             prevCard.style.transition = 'transform 0.3s ease-in-out';
-
-            if (diff > 0) {
-                currentCard.style.transform = `translateX(1000px) rotate(${diff / 20}deg)`;
-                prevCard.style.transform = 'scale(1)';
-                currentGift = (currentGift - 1 + gifts.length) % gifts.length;
-            } else {
-                currentCard.style.transform = `translateX(-1000px) rotate(${diff / 20}deg)`;
-                nextCard.style.transform = 'scale(1)';
-                currentGift = (currentGift + 1) % gifts.length;
-            }
-
-            currentCard.addEventListener('transitionend', () => {
-                renderCards();
-                addSwipeFunctionality();
-            }, { once: true });
+            prevCard.style.transform = 'translateX(0) scale(1)';
+            currentGift = (currentGift - 1 + gifts.length) % gifts.length;
+        } else if (diff < -100) {
+            currentCard.style.transition = 'transform 0.3s ease-in-out';
+            currentCard.style.transform = 'translateX(-1000px)';
+            nextCard.style.transition = 'transform 0.3s ease-in-out';
+            nextCard.style.transform = 'translateX(0) scale(1)';
+            currentGift = (currentGift + 1) % gifts.length;
         } else {
             currentCard.style.transition = 'transform 0.3s ease-in-out';
-            prevCard.style.transition = 'transform 0.3s ease-in-out';
-            nextCard.style.transition = 'transform 0.3s ease-in-out';
             currentCard.style.transform = 'translateX(0) rotate(0)';
-            prevCard.style.transform = 'scale(0.9)';
-            nextCard.style.transform = 'scale(0.9)';
+            prevCard.style.transition = 'transform 0.3s ease-in-out';
+            prevCard.style.transform = 'translateX(-300px) scale(0.9)';
+            nextCard.style.transition = 'transform 0.3s ease-in-out';
+            nextCard.style.transform = 'translateX(300px) scale(0.9)';
         }
+
+        currentCard.addEventListener('transitionend', () => {
+            renderCards();
+            addSwipeFunctionality();
+        }, { once: true });
     };
 
     currentCard.addEventListener('mousedown', (e) => startDrag(e.clientX));
